@@ -117,6 +117,22 @@ func main() {
 	api.Put("/coupons/:id", handler.UpdateCoupon)
 	api.Delete("/coupons/:id", handler.DeleteCoupon)
 
+	// CRM Admin — requer JWT + role admin/owner
+	admin := app.Group("/admin", middleware.JWTAuth(cfg.JWTSecret), middleware.AdminOnly())
+
+	// Clientes
+	admin.Get("/customers", handler.ListCustomers)
+	admin.Get("/customers/:id", handler.GetCustomerDetail)
+
+	// Dashboard
+	admin.Get("/dashboard", handler.GetDashboard)
+
+	// Relatórios
+	admin.Get("/reports/sales", handler.GetSalesReport)
+	admin.Get("/reports/products", handler.GetTopProducts)
+	admin.Get("/reports/stock-alerts", handler.GetStockAlerts)
+	admin.Get("/reports/export", handler.ExportSalesCSV)
+
 	log.Printf("StoreMaker API rodando na porta %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {
 		log.Fatalf("falha ao iniciar servidor: %v", err)
