@@ -15,3 +15,7 @@ tmp/
 *.swo
 uploads/*
 !uploads/.gitkeep
+
+# Frontend
+web/node_modules/
+web/dist/
