@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -13,8 +14,6 @@ import (
 	"github.com/apsferreira/storemaker/internal/middleware"
 	"github.com/apsferreira/storemaker/internal/pkg/config"
 	"github.com/apsferreira/storemaker/internal/pkg/database"
-
-	"time"
 )
 
 func main() {
@@ -59,12 +58,37 @@ func main() {
 		},
 	}))
 
+	// Servir uploads estáticos
+	app.Static("/uploads", "./uploads")
+
 	// Health check (público)
 	app.Get("/health", handler.HealthCheck)
 
+	// Catálogo público (sem auth)
+	app.Get("/api/v1/public/catalog", handler.PublicCatalog)
+
 	// Rotas protegidas por JWT
 	api := app.Group("/api/v1", middleware.JWTAuth(cfg.JWTSecret))
-	_ = api // rotas serão adicionadas nos próximos PRs
+
+	// Categorias
+	api.Post("/categories", handler.CreateCategory)
+	api.Get("/categories", handler.ListCategories)
+	api.Get("/categories/:id", handler.GetCategory)
+	api.Put("/categories/:id", handler.UpdateCategory)
+	api.Delete("/categories/:id", handler.DeleteCategory)
+
+	// Produtos
+	api.Post("/products", handler.CreateProduct)
+	api.Get("/products", handler.ListProducts)
+	api.Get("/products/:id", handler.GetProduct)
+	api.Put("/products/:id", handler.UpdateProduct)
+	api.Delete("/products/:id", handler.DeleteProduct)
+	api.Put("/products/reorder", handler.ReorderProducts)
+	api.Post("/products/:id/photos", handler.UploadProductPhotos)
+	api.Post("/products/import", handler.ImportProductsCSV)
+
+	// Estoque
+	api.Get("/stock/alerts", handler.GetLowStockAlert)
 
 	log.Printf("StoreMaker API rodando na porta %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {
