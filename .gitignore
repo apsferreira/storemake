@@ -1,0 +1,15 @@
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.env
+.env.local
+vendor/
+tmp/
+.idea/
+.vscode/
+*.swp
+*.swo

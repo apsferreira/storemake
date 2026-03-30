@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS pedidos;
+DROP TYPE IF EXISTS pedido_status;
