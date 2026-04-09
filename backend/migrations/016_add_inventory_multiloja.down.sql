@@ -1,0 +1,11 @@
+DROP TRIGGER IF EXISTS trigger_inventory_reorder ON inventory_masters;
+DROP FUNCTION IF EXISTS check_inventory_reorder;
+DROP TABLE IF EXISTS inventory_alerts;
+DROP TABLE IF EXISTS supplier_orders;
+DROP TABLE IF EXISTS inventory_movements;
+DROP TABLE IF EXISTS store_allocations;
+DROP TYPE IF EXISTS supplier_order_status;
+DROP TYPE IF EXISTS inventory_movement_type;
+ALTER TABLE inventory_masters DROP COLUMN IF EXISTS quantity_reserved;
+ALTER TABLE inventory_masters DROP COLUMN IF EXISTS quantity_total;
+DROP TABLE IF EXISTS inventory_masters;
