@@ -17,6 +17,7 @@ type Config struct {
 	WAPhoneNumberID        string
 	WAAccessToken          string
 	WAWebhookVerifyToken   string
+	WAAppSecret            string // VUL-003: HMAC-SHA256 para validar X-Hub-Signature-256
 }
 
 func Load() *Config {
@@ -29,9 +30,10 @@ func Load() *Config {
 		JWTSecret:            requireEnv("JWT_SECRET"),    // BKL-114: sem fallback — segredo crítico
 		CORSOrigins:          requireEnv("CORS_ORIGINS"),  // BKL-107: sem wildcard default — segurança
 		WebhookSecret:        getEnv("WEBHOOK_SECRET", ""),
-		WAPhoneNumberID:      getEnv("WHATSAPP_PHONE_NUMBER_ID", ""),  // BKL-144: opcional
-		WAAccessToken:        getEnv("WHATSAPP_ACCESS_TOKEN", ""),     // BKL-144: opcional
+		WAPhoneNumberID:      getEnv("WHATSAPP_PHONE_NUMBER_ID", ""),    // BKL-144: opcional
+		WAAccessToken:        getEnv("WHATSAPP_ACCESS_TOKEN", ""),       // BKL-144: opcional
 		WAWebhookVerifyToken: getEnv("WHATSAPP_WEBHOOK_VERIFY_TOKEN", ""),
+		WAAppSecret:          getEnv("WHATSAPP_APP_SECRET", ""),         // VUL-003: validação HMAC
 	}
 }
 

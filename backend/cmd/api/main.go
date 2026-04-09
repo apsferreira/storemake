@@ -90,7 +90,7 @@ func main() {
 
 	// BKL-144: WhatsApp — webhook público (Meta faz GET+POST sem JWT)
 	app.Get("/api/v1/whatsapp/webhook", handler.WAWebhookVerify(cfg.WAWebhookVerifyToken))
-	app.Post("/api/v1/whatsapp/webhook", handler.WAWebhookInbound)
+	app.Post("/api/v1/whatsapp/webhook", handler.WAWebhookInbound(cfg.WAAppSecret))
 
 	// Rotas protegidas por JWT
 	api := app.Group("/api/v1", middleware.JWTAuth(cfg.JWTSecret))

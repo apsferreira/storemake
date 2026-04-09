@@ -2,6 +2,9 @@ package handler
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -56,16 +59,40 @@ func WAWebhookVerify(verifyToken string) fiber.Handler {
 	}
 }
 
+// validateMetaSignature verifica o header X-Hub-Signature-256 enviado pelo Meta.
+// VUL-003: sem validação qualquer requisição pode injetar eventos falsos no webhook.
+func validateMetaSignature(body []byte, signature string, appSecret string) bool {
+	if appSecret == "" || signature == "" {
+		return false
+	}
+	mac := hmac.New(sha256.New, []byte(appSecret))
+	mac.Write(body)
+	expected := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+	return hmac.Equal([]byte(signature), []byte(expected))
+}
+
 // WAWebhookInbound godoc
 // POST /api/v1/whatsapp/webhook
 // Recebe mensagens inbound e eventos de status da Cloud API do Meta.
-// Por hora apenas loga o payload — processamento de inbound é escopo futuro.
-func WAWebhookInbound(c *fiber.Ctx) error {
-	log.Info().
-		RawJSON("body", c.Body()).
-		Msg("whatsapp: evento inbound recebido")
-	// A Cloud API exige HTTP 200 imediato; processamento assíncrono no futuro.
-	return c.JSON(fiber.Map{"received": true})
+// Valida X-Hub-Signature-256 antes de processar o payload (VUL-003).
+func WAWebhookInbound(appSecret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		body := c.Body()
+		sig := c.Get("X-Hub-Signature-256")
+
+		if !validateMetaSignature(body, sig, appSecret) {
+			log.Warn().
+				Str("ip", c.IP()).
+				Msg("whatsapp: webhook rejeitado — assinatura HMAC inválida ou ausente")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "assinatura inválida"})
+		}
+
+		log.Info().
+			RawJSON("body", body).
+			Msg("whatsapp: evento inbound recebido")
+		// A Cloud API exige HTTP 200 imediato; processamento assíncrono no futuro.
+		return c.JSON(fiber.Map{"received": true})
+	}
 }
 
 // WANotifyOrder godoc
