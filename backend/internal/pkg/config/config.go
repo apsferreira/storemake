@@ -8,24 +8,30 @@ import (
 )
 
 type Config struct {
-	Env            string
-	Port           string
-	DatabaseURL    string
-	JWTSecret      string
-	CORSOrigins    string
-	WebhookSecret  string
+	Env                    string
+	Port                   string
+	DatabaseURL            string
+	JWTSecret              string
+	CORSOrigins            string
+	WebhookSecret          string
+	WAPhoneNumberID        string
+	WAAccessToken          string
+	WAWebhookVerifyToken   string
 }
 
 func Load() *Config {
 	_ = godotenv.Load()
 
 	return &Config{
-		Env:           getEnv("ENV", "development"),
-		Port:          getEnv("PORT", "3080"),
-		DatabaseURL:   getEnv("DATABASE_URL", ""),
-		JWTSecret:     requireEnv("JWT_SECRET"), // BKL-114: sem fallback — segredo crítico
-		CORSOrigins:   requireEnv("CORS_ORIGINS"), // BKL-107: sem wildcard default — segurança
-		WebhookSecret: getEnv("WEBHOOK_SECRET", ""),
+		Env:                  getEnv("ENV", "development"),
+		Port:                 getEnv("PORT", "3080"),
+		DatabaseURL:          getEnv("DATABASE_URL", ""),
+		JWTSecret:            requireEnv("JWT_SECRET"),    // BKL-114: sem fallback — segredo crítico
+		CORSOrigins:          requireEnv("CORS_ORIGINS"),  // BKL-107: sem wildcard default — segurança
+		WebhookSecret:        getEnv("WEBHOOK_SECRET", ""),
+		WAPhoneNumberID:      getEnv("WHATSAPP_PHONE_NUMBER_ID", ""),  // BKL-144: opcional
+		WAAccessToken:        getEnv("WHATSAPP_ACCESS_TOKEN", ""),     // BKL-144: opcional
+		WAWebhookVerifyToken: getEnv("WHATSAPP_WEBHOOK_VERIFY_TOKEN", ""),
 	}
 }
 

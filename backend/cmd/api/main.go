@@ -29,6 +29,9 @@ func main() {
 	}
 	defer database.Close()
 
+	// BKL-144: WhatsApp Business Cloud API (opcional — sem credenciais a integração fica inativa)
+	handler.InitWhatsApp(cfg.WAPhoneNumberID, cfg.WAAccessToken)
+
 	app := fiber.New(fiber.Config{
 		AppName:      "StoreMaker API",
 		ReadTimeout:  10 * time.Second,
@@ -85,6 +88,10 @@ func main() {
 	// Webhook de pagamento
 	app.Post("/api/v1/webhooks/payment", handler.PaymentWebhook(cfg.WebhookSecret))
 
+	// BKL-144: WhatsApp — webhook público (Meta faz GET+POST sem JWT)
+	app.Get("/api/v1/whatsapp/webhook", handler.WAWebhookVerify(cfg.WAWebhookVerifyToken))
+	app.Post("/api/v1/whatsapp/webhook", handler.WAWebhookInbound)
+
 	// Rotas protegidas por JWT
 	api := app.Group("/api/v1", middleware.JWTAuth(cfg.JWTSecret))
 
@@ -112,6 +119,10 @@ func main() {
 
 	// Estoque
 	api.Get("/stock/alerts", handler.GetLowStockAlert)
+
+	// BKL-144: WhatsApp — status e envio manual (protegidos por JWT)
+	api.Get("/whatsapp/status", handler.WAStatus)
+	api.Post("/whatsapp/notify-order", handler.WANotifyOrder)
 
 	// Pedidos (admin)
 	api.Get("/orders", handler.ListOrders)

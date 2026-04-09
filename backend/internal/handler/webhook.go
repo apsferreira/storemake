@@ -71,6 +71,9 @@ func PaymentWebhook(webhookSecret string) fiber.Handler {
 				// Não retorna erro ao gateway — pedido já foi confirmado
 			}
 
+			// BKL-144: notificação WhatsApp (non-fatal — não bloqueia resposta ao gateway)
+			NotifyOrderConfirmedViaWA(order.CustomerPhone, order.CustomerName, order.ID, order.TotalCents)
+
 			log.Info().Str("order_id", order.ID).Msg("pagamento confirmado, estoque baixado")
 
 		case "refunded", "cancelled", "failed":

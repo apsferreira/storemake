@@ -104,5 +104,8 @@ func UpdateOrderStatus(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao atualizar status"})
 	}
 
+	// BKL-144: notificação WhatsApp (non-fatal — não bloqueia resposta ao admin)
+	NotifyOrderStatusViaWA(order.CustomerPhone, order.ID, status)
+
 	return c.JSON(order)
 }
