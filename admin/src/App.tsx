@@ -12,6 +12,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { InventoryDetailPage } from './pages/InventoryDetailPage'
 import { InventoryAlertsPage } from './pages/InventoryAlertsPage'
+import { ModulesPage } from './pages/ModulesPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated } = useAuth()
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="estoque" element={<InventoryPage />} />
         <Route path="estoque/alertas" element={<InventoryAlertsPage />} />
         <Route path="estoque/:id" element={<InventoryDetailPage />} />
+        <Route path="modulos" element={<ModulesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

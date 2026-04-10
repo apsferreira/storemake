@@ -78,6 +78,13 @@ export const stockApi = {
   lowStock: () => api.get<{ data: Product[] }>('/stock/alerts'),
 }
 
+// SPEC-006-B: Feature flags de módulos
+export const modulesApi = {
+  list: () => api.get<{ modules: { module: string; enabled: boolean; config: Record<string, unknown>; updated_at: string }[] }>('/modules'),
+  update: (module: string, enabled: boolean, config?: Record<string, unknown>) =>
+    api.put<{ module: string; enabled: boolean; message: string }>(`/modules/${module}`, { enabled, config: config ?? {} }),
+}
+
 // BKL-900: Inventário multi-loja centralizado
 export const inventoryApi = {
   list: () => api.get<{ items: InventoryMaster[]; total: number }>('/inventory'),

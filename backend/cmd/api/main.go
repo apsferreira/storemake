@@ -70,7 +70,8 @@ func main() {
 	// Health check (público)
 	app.Get("/health", handler.HealthCheck)
 
-	// Catálogo público (sem auth)
+	// Catálogo público (sem auth) — SPEC-006-B: guard de módulo storefront via query param store_id
+	// Nota: ModuleGuard no catálogo público usa store_id do domínio resolvido pelo DomainResolver
 	app.Get("/api/v1/public/catalog", handler.PublicCatalog)
 
 	// Carrinho (público, session-based)
@@ -117,8 +118,23 @@ func main() {
 	api.Post("/stores/:id/domain/verify", handler.VerifyStoreDomain)
 	api.Delete("/stores/:id/domain", handler.RemoveStoreDomain)
 
-	// Estoque
+	// Estoque legado
 	api.Get("/stock/alerts", handler.GetLowStockAlert)
+
+	// SPEC-006-B: Módulos (feature flags) do tenant
+	api.Get("/modules", handler.ListModules)
+	api.Put("/modules/:module", handler.UpdateModule)
+
+	// BKL-900: Inventário multi-loja centralizado
+	api.Post("/inventory", handler.CreateInventoryMaster)
+	api.Get("/inventory/alerts", handler.ListInventoryAlerts)
+	api.Post("/inventory/alerts/:id/acknowledge", handler.AcknowledgeInventoryAlert)
+	api.Get("/inventory/orders", handler.ListSupplierOrders)
+	api.Get("/inventory/:id", handler.GetInventoryMaster)
+	api.Post("/inventory/:id/adjust", handler.AdjustInventoryQuantity)
+	api.Put("/inventory/:id/allocations/:loja_id", handler.UpsertStoreAllocation)
+	api.Get("/inventory/:id/movements", handler.ListInventoryMovements)
+	api.Post("/inventory/:id/orders", handler.CreateSupplierOrder)
 
 	// BKL-144: WhatsApp — status e envio manual (protegidos por JWT)
 	api.Get("/whatsapp/status", handler.WAStatus)

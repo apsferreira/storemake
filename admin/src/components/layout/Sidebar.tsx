@@ -12,6 +12,7 @@ import {
   X,
   Store,
   Warehouse,
+  ToggleLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/estoque', label: 'Estoque', icon: Warehouse },
   { to: '/clientes', label: 'Clientes', icon: Users },
   { to: '/cupons', label: 'Cupons', icon: Tag },
+  { to: '/modulos', label: 'Módulos', icon: ToggleLeft },
   { to: '/relatorios', label: 'Relatorios', icon: BarChart3 },
   { to: '/configuracoes', label: 'Configuracoes', icon: Settings },
 ]
