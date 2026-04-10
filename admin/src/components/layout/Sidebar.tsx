@@ -11,6 +11,7 @@ import {
   LogOut,
   X,
   Store,
+  Warehouse,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/produtos', label: 'Produtos', icon: Package },
   { to: '/pedidos', label: 'Pedidos', icon: ClipboardList },
+  { to: '/estoque', label: 'Estoque', icon: Warehouse },
   { to: '/clientes', label: 'Clientes', icon: Users },
   { to: '/cupons', label: 'Cupons', icon: Tag },
   { to: '/relatorios', label: 'Relatorios', icon: BarChart3 },

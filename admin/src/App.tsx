@@ -9,6 +9,9 @@ import { CustomersPage } from './pages/CustomersPage'
 import { CouponsPage } from './pages/CouponsPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { InventoryPage } from './pages/InventoryPage'
+import { InventoryDetailPage } from './pages/InventoryDetailPage'
+import { InventoryAlertsPage } from './pages/InventoryAlertsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated } = useAuth()
@@ -35,6 +38,9 @@ export default function App() {
         <Route path="cupons" element={<CouponsPage />} />
         <Route path="relatorios" element={<ReportsPage />} />
         <Route path="configuracoes" element={<SettingsPage />} />
+        <Route path="estoque" element={<InventoryPage />} />
+        <Route path="estoque/alertas" element={<InventoryAlertsPage />} />
+        <Route path="estoque/:id" element={<InventoryDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

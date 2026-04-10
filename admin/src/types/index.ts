@@ -167,3 +167,108 @@ export interface UpdateOrderStatusRequest {
   status: OrderStatus
   tracking_code?: string
 }
+
+// --- BKL-900: Inventário multi-loja centralizado ---
+
+export interface InventoryMaster {
+  id: string
+  tenant_id: string
+  produto_id: string | null
+  sku_global: string
+  nome: string
+  descricao: string
+  unidade: string
+  custo_unitario_cents: number
+  quantity_total: number
+  quantity_reserved: number
+  reorder_point: number
+  reorder_quantity: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StoreAllocation {
+  id: string
+  master_id: string
+  loja_id: string
+  quantity_allocated: number
+  quantity_sold: number
+  profit_share_pct: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface InventoryMovement {
+  id: string
+  master_id: string
+  loja_id: string | null
+  pedido_id: string | null
+  movement_type: 'entrada' | 'saida_venda' | 'saida_perda' | 'transferencia' | 'ajuste' | 'devolucao'
+  quantity: number
+  quantity_before: number
+  quantity_after: number
+  custo_unitario_cents: number | null
+  observacao: string
+  created_by: string | null
+  created_at: string
+}
+
+export interface InventoryAlert {
+  id: string
+  master_id: string
+  quantity_current: number
+  quantity_reorder: number
+  alert_type: 'low_stock' | 'out_of_stock'
+  acknowledged: boolean
+  acknowledged_by: string | null
+  acknowledged_at: string | null
+  created_at: string
+}
+
+export interface SupplierOrder {
+  id: string
+  tenant_id: string
+  master_id: string
+  status: 'rascunho' | 'enviado' | 'confirmado' | 'recebido' | 'cancelado'
+  quantity_ordered: number
+  quantity_received: number
+  custo_total_cents: number
+  fornecedor_nome: string
+  fornecedor_contato: string
+  observacao: string
+  expected_at: string | null
+  received_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateInventoryMasterRequest {
+  sku_global?: string
+  nome: string
+  descricao?: string
+  unidade?: string
+  custo_unitario_cents?: number
+  quantity_total: number
+  reorder_point?: number
+  reorder_quantity?: number
+}
+
+export interface AdjustQuantityRequest {
+  delta: number
+  loja_id?: string
+  observacao?: string
+}
+
+export interface UpsertAllocationRequest {
+  quantity_allocated: number
+  profit_share_pct?: number
+}
+
+export interface CreateSupplierOrderRequest {
+  quantity_ordered: number
+  custo_total_cents?: number
+  fornecedor_nome?: string
+  observacao?: string
+}

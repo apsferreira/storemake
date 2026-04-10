@@ -11,6 +11,15 @@ import type {
   UpdateCouponRequest,
   CreateCategoryRequest,
   UpdateOrderStatusRequest,
+  InventoryMaster,
+  StoreAllocation,
+  InventoryMovement,
+  InventoryAlert,
+  SupplierOrder,
+  CreateInventoryMasterRequest,
+  AdjustQuantityRequest,
+  UpsertAllocationRequest,
+  CreateSupplierOrderRequest,
 } from '../types'
 
 // Products
@@ -67,4 +76,26 @@ export const couponsApi = {
 // Stock alerts
 export const stockApi = {
   lowStock: () => api.get<{ data: Product[] }>('/stock/alerts'),
+}
+
+// BKL-900: Inventário multi-loja centralizado
+export const inventoryApi = {
+  list: () => api.get<{ items: InventoryMaster[]; total: number }>('/inventory'),
+  get: (id: string) =>
+    api.get<{ master: InventoryMaster; allocations: StoreAllocation[]; movements: InventoryMovement[] }>(
+      `/inventory/${id}`
+    ),
+  create: (data: CreateInventoryMasterRequest) => api.post<InventoryMaster>('/inventory', data),
+  adjust: (id: string, data: AdjustQuantityRequest) =>
+    api.post<InventoryMaster>(`/inventory/${id}/adjust`, data),
+  allocate: (id: string, lojaId: string, data: UpsertAllocationRequest) =>
+    api.put<StoreAllocation>(`/inventory/${id}/allocations/${lojaId}`, data),
+  alerts: () => api.get<{ alerts: InventoryAlert[]; count: number }>('/inventory/alerts'),
+  acknowledgeAlert: (id: string) =>
+    api.post<{ message: string }>(`/inventory/alerts/${id}/acknowledge`, {}),
+  movements: (id: string, limit = 50) =>
+    api.get<{ movements: InventoryMovement[]; count: number }>(`/inventory/${id}/movements?limit=${limit}`),
+  orders: () => api.get<{ orders: SupplierOrder[]; count: number }>('/inventory/orders'),
+  createOrder: (id: string, data: CreateSupplierOrderRequest) =>
+    api.post<SupplierOrder>(`/inventory/${id}/orders`, data),
 }
