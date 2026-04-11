@@ -18,6 +18,7 @@ spec:
       containers:
         - name: storemaker
           image: ghcr.io/apsferreira/storemaker:latest
+          imagePullPolicy: IfNotPresent # BKL-1016: evita rollout não intencional com :latest
           ports:
             - containerPort: 3080
               protocol: TCP
