@@ -84,6 +84,9 @@ func main() {
 	// Checkout (público)
 	app.Post("/api/v1/checkout", handler.Checkout)
 
+	// BKL-422: Cálculo de frete via Melhor Envio (público — chamado no checkout)
+	app.Post("/api/v1/shipping/calculate", handler.Calculate)
+
 	// Validação de cupom (público por store)
 	app.Post("/api/v1/coupons/validate", handler.ValidateCoupon)
 
