@@ -40,6 +40,7 @@ func main() {
 	})
 
 	app.Use(recover.New())
+	app.Use(middleware.SecurityHeaders()) // BKL-455: X-Frame-Options, HSTS, CSP, etc.
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.CORSOrigins,
