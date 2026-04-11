@@ -129,9 +129,20 @@ func main() {
 	api.Get("/modules", handler.ListModules)
 	api.Put("/modules/:module", handler.UpdateModule)
 
-	// BKL-900: Inventário multi-loja centralizado
-	api.Post("/inventory", handler.CreateInventoryMaster)
+	// BKL-900: Inventário multi-loja centralizado — rotas /items (spec canônica)
+	api.Get("/inventory/items", handler.ListInventoryItems)
+	api.Post("/inventory/items", handler.CreateInventoryItem)
+	api.Get("/inventory/items/:id", handler.GetInventoryItem)
+	api.Put("/inventory/items/:id", handler.UpdateInventoryItem)
+	api.Delete("/inventory/items/:id", handler.DeleteInventoryItem)
+	api.Post("/inventory/items/:id/allocate", handler.AllocateInventoryItem)
+	api.Post("/inventory/items/:id/movement", handler.RegisterInventoryMovement)
+	api.Get("/inventory/movements", handler.ListAllInventoryMovements)
 	api.Get("/inventory/alerts", handler.ListInventoryAlerts)
+	api.Put("/inventory/alerts/:id/acknowledge", handler.AcknowledgeInventoryAlert)
+
+	// BKL-900: Rotas legadas mantidas para retrocompatibilidade
+	api.Post("/inventory", handler.CreateInventoryMaster)
 	api.Post("/inventory/alerts/:id/acknowledge", handler.AcknowledgeInventoryAlert)
 	api.Get("/inventory/orders", handler.ListSupplierOrders)
 	api.Get("/inventory/:id", handler.GetInventoryMaster)
