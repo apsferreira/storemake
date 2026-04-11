@@ -11,6 +11,7 @@ import { CatalogPage } from './pages/CatalogPage';
 import { ProductPage } from './pages/ProductPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmedPage } from './pages/OrderConfirmedPage';
+import { TermosUsoPage } from './pages/TermosUsoPage';
 
 export default function App() {
   return (
@@ -26,6 +27,8 @@ export default function App() {
                 <Route path="/produto/:slug" element={<ProductPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/pedido-confirmado" element={<OrderConfirmedPage />} />
+                {/* BKL-655: Termos de Uso obrigatório para marketplace (CDC Art. 14) */}
+                <Route path="/termos-de-uso" element={<TermosUsoPage />} />
               </Routes>
               <Footer />
               <WhatsAppButton />
