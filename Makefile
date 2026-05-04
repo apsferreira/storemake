@@ -1,4 +1,4 @@
-.PHONY: run build test migrate-up migrate-down help
+.PHONY: run build test lint migrate-up migrate-down help
 
 GREEN=\033[0;32m
 YELLOW=\033[1;33m
@@ -22,6 +22,10 @@ build: ## Compila o binário
 test: ## Executa testes
 	@echo "$(GREEN)Executando testes...$(NC)"
 	cd backend && go test ./...
+
+lint: ## Executa golangci-lint (requer golangci-lint instalado)
+	@echo "$(GREEN)Executando lint...$(NC)"
+	cd backend && golangci-lint run ./...
 
 migrate-up: ## Executa migrations (up)
 	@echo "$(GREEN)Executando migrations...$(NC)"
