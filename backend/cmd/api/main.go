@@ -14,6 +14,7 @@ import (
 	"github.com/apsferreira/storemaker/internal/middleware"
 	"github.com/apsferreira/storemaker/internal/pkg/config"
 	"github.com/apsferreira/storemaker/internal/pkg/database"
+	"github.com/apsferreira/storemaker/internal/pkg/pulse"
 	"github.com/apsferreira/storemaker/internal/pkg/storage"
 )
 
@@ -39,6 +40,9 @@ func main() {
 
 	// BKL-144: WhatsApp Business Cloud API (opcional — sem credenciais a integração fica inativa)
 	handler.InitWhatsApp(cfg.WAPhoneNumberID, cfg.WAAccessToken)
+
+	// BKL-1250: Pulse tracking — fire-and-forget, sem bloquear handlers.
+	handler.InitPulse(pulse.New())
 
 	app := fiber.New(fiber.Config{
 		AppName:      "StoreMaker API",

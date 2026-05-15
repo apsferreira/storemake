@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -15,19 +14,38 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/apsferreira/storemaker/internal/model"
+	"github.com/apsferreira/storemaker/internal/pkg/storage"
 	"github.com/apsferreira/storemaker/internal/repository"
 )
 
-const (
-	maxPhotoSize = 5 * 1024 * 1024 // 5MB
-	uploadDir    = "./uploads"
-)
+// trackProductPublished emite product.published quando is_active=true.
+func trackProductPublished(ctx context.Context, userID, storeID, productID string) {
+	if pulseClient == nil {
+		return
+	}
+	pulseClient.Track(ctx, "product.published", userID, map[string]string{
+		"store_id":   storeID,
+		"product_id": productID,
+	})
+}
+
+const maxPhotoSize = 5 * 1024 * 1024 // 5MB
 
 var allowedMIME = map[string]bool{
 	"image/jpeg": true,
 	"image/png":  true,
 	"image/webp": true,
 	"image/gif":  true,
+}
+
+// storageClient é o cliente MinIO injetado via InitStorage.
+// É obrigatório — o servidor não sobe sem ele.
+var storageClient *storage.Client
+
+// InitStorage injeta o cliente de armazenamento nos handlers de produto.
+// Deve ser chamado em main.go antes de registrar as rotas.
+func InitStorage(c *storage.Client) {
+	storageClient = c
 }
 
 func CreateProduct(c *fiber.Ctx) error {
@@ -51,6 +69,11 @@ func CreateProduct(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "slug já existe nesta loja"})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao criar produto"})
+	}
+
+	// BKL-1250: Pulse tracking — emite product.published se produto criado ativo.
+	if product.IsActive {
+		trackProductPublished(c.Context(), extractUserID(c), storeID, product.ID)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(product)
@@ -136,6 +159,11 @@ func UpdateProduct(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "produto não encontrado"})
 	}
 
+	// BKL-1250: Pulse tracking — emite product.published quando is_active ativado explicitamente.
+	if req.IsActive != nil && *req.IsActive && product.IsActive {
+		trackProductPublished(c.Context(), extractUserID(c), storeID, product.ID)
+	}
+
 	return c.JSON(product)
 }
 
@@ -203,26 +231,30 @@ func UploadProductPhotos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "nenhuma foto enviada"})
 	}
 
-	storeDir := filepath.Join(uploadDir, storeID, productID)
-	if err := os.MkdirAll(storeDir, 0755); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao criar diretório de upload"})
-	}
-
 	var photos []model.ProductPhoto
 	for i, file := range files {
 		if err := validateUploadFile(file); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("arquivo %s: %s", file.Filename, err.Error())})
 		}
 
-		ext := filepath.Ext(file.Filename)
-		filename := uuid.New().String() + ext
-		dest := filepath.Join(storeDir, filename)
+		ext := strings.ToLower(strings.TrimPrefix(getFileExt(file.Filename), "."))
+		if ext == "" {
+			ext = "jpg"
+		}
+		objectName := fmt.Sprintf("stores/%s/products/%s/%s.%s", storeID, productID, uuid.New().String(), ext)
 
-		if err := c.SaveFile(file, dest); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao salvar foto"})
+		f, err := file.Open()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao abrir foto para upload"})
 		}
 
-		url := fmt.Sprintf("/uploads/%s/%s/%s", storeID, productID, filename)
+		contentType := detectContentType(file)
+		url, err := storageClient.Upload(context.Background(), objectName, f, file.Size, contentType)
+		f.Close()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao enviar foto para armazenamento"})
+		}
+
 		photo, err := repository.CreatePhoto(productID, url, i)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "erro ao registrar foto"})
@@ -466,6 +498,35 @@ func validateUploadFile(file *multipart.FileHeader) error {
 	}
 
 	return nil
+}
+
+// getFileExt retorna a extensão do arquivo sem o ponto (ex: "jpg").
+// Usa apenas os caracteres após o último "." no nome do arquivo.
+func getFileExt(filename string) string {
+	for i := len(filename) - 1; i >= 0; i-- {
+		if filename[i] == '.' {
+			return filename[i+1:]
+		}
+	}
+	return ""
+}
+
+// detectContentType lê os primeiros 512 bytes do arquivo para detectar o MIME type.
+// Retorna "application/octet-stream" em caso de erro.
+func detectContentType(file *multipart.FileHeader) string {
+	f, err := file.Open()
+	if err != nil {
+		return "application/octet-stream"
+	}
+	defer f.Close()
+
+	buf := make([]byte, 512)
+	n, err := f.Read(buf)
+	if err != nil && err != io.EOF {
+		return "application/octet-stream"
+	}
+
+	return http.DetectContentType(buf[:n])
 }
 
 func buildFilter(c *fiber.Ctx) model.ProductListFilter {

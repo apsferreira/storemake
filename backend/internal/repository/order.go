@@ -356,3 +356,14 @@ func isValidTransition(from, to string) bool {
 	}
 	return false
 }
+
+// CountPaidOrders retorna quantos pedidos com status "pago" a loja tem.
+// Usado para detectar a primeira venda (count == 1 após confirmação).
+func CountPaidOrders(storeID string) (int, error) {
+	var count int
+	err := database.DB.QueryRow(
+		`SELECT COUNT(*) FROM pedidos WHERE loja_id = $1 AND status = 'pago'`,
+		storeID,
+	).Scan(&count)
+	return count, err
+}

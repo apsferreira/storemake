@@ -6,7 +6,19 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/apsferreira/storemaker/internal/pkg/pulse"
 )
+
+// pulseClient é o cliente Pulse compartilhado entre os handlers — fire-and-forget.
+// Inicializado via InitPulse no main.go.
+var pulseClient *pulse.Client
+
+// InitPulse injeta o cliente Pulse nos handlers.
+// Deve ser chamado em main.go antes de registrar as rotas.
+func InitPulse(c *pulse.Client) {
+	pulseClient = c
+}
 
 // extractStoreID extrai o store_id das claims JWT do contexto.
 // Espera que o JWT contenha claim "store_id".
@@ -22,6 +34,16 @@ func extractStoreID(c *fiber.Ctx) (string, error) {
 	}
 
 	return storeID, nil
+}
+
+// extractUserID extrai o sub (user_id do owner) das claims JWT do contexto.
+func extractUserID(c *fiber.Ctx) string {
+	claims, ok := c.Locals("claims").(jwt.MapClaims)
+	if !ok {
+		return ""
+	}
+	sub, _ := claims["sub"].(string)
+	return sub
 }
 
 func paginationParams(c *fiber.Ctx) (page, perPage int) {

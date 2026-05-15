@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -82,6 +83,21 @@ func PaymentWebhook(webhookSecret string) fiber.Handler {
 			NotifyOrderConfirmedViaWA(order.CustomerPhone, order.CustomerName, order.ID, order.TotalCents)
 
 			log.Info().Str("order_id", order.ID).Msg("pagamento confirmado, estoque baixado")
+
+			// BKL-1250: Pulse tracking — fire-and-forget.
+			if pulseClient != nil {
+				pulseClient.Track(context.Background(), "order.paid", order.StoreID, map[string]string{
+					"store_id":       order.StoreID,
+					"order_id":       order.ID,
+					"payment_method": order.PaymentMethod,
+				})
+				// store.first_sale: emitir apenas se for o primeiro pedido pago da loja.
+				if count, err := repository.CountPaidOrders(order.StoreID); err == nil && count == 1 {
+					pulseClient.Track(context.Background(), "store.first_sale", order.StoreID, map[string]string{
+						"store_id": order.StoreID,
+					})
+				}
+			}
 
 		case "refunded", "cancelled", "failed":
 			if err := repository.UpdateOrderPayment(order.ID, payload.PaymentID, "cancelado"); err != nil {

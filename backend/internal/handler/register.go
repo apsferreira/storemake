@@ -158,6 +158,14 @@ func Register(jwtSecret string) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "loja criada, mas erro ao gerar token — faça login"})
 		}
 
+		// BKL-1250: Pulse tracking — fire-and-forget.
+		if pulseClient != nil {
+			pulseClient.Track(context.Background(), "store.created", ownerID.String(), map[string]string{
+				"store_id": lojaID.String(),
+				"plan":     req.PlanSlug,
+			})
+		}
+
 		return c.Status(fiber.StatusCreated).JSON(RegisterResponse{
 			Token:   storeToken,
 			StoreID: lojaID.String(),
